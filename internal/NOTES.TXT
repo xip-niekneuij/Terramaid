@@ -1,0 +1,62 @@
+# Plan Parsing
+
+- Current problem: The structure of the digraph is different between plan files and straight plans
+
+Output:
+
+```console
+❯ terraform graph
+digraph G {
+  rankdir = "RL";
+  node [shape = rect, fontname = "sans-serif"];
+  "aws_db_instance.dev_example_db_instance" [label="aws_db_instance.dev_example_db_instance"];
+  "aws_instance.dev_example_instance" [label="aws_instance.dev_example_instance"];
+  "aws_s3_bucket.dev_logs_bucket" [label="aws_s3_bucket.dev_logs_bucket"];
+  "aws_s3_bucket.dev_test_bucket" [label="aws_s3_bucket.dev_test_bucket"];
+  "aws_s3_bucket_policy.dev_logs_bucket_policy" [label="aws_s3_bucket_policy.dev_logs_bucket_policy"];
+  "aws_s3_bucket_policy.dev_test_bucket_policy" [label="aws_s3_bucket_policy.dev_test_bucket_policy"];
+  "aws_s3_bucket_policy.dev_logs_bucket_policy" -> "aws_s3_bucket.dev_logs_bucket";
+  "aws_s3_bucket_policy.dev_test_bucket_policy" -> "aws_s3_bucket.dev_test_bucket";
+}
+Terramaid/test binary-path-fix*
+❯ terraform graph -plan=tfplan
+digraph {
+	compound = "true"
+	newrank = "true"
+	subgraph "root" {
+		"[root] aws_db_instance.dev_example_db_instance" [label = "aws_db_instance.dev_example_db_instance", shape = "box"]
+		"[root] aws_db_instance.dev_example_db_instance (expand)" [label = "aws_db_instance.dev_example_db_instance", shape = "box"]
+		"[root] aws_instance.dev_example_instance" [label = "aws_instance.dev_example_instance", shape = "box"]
+		"[root] aws_instance.dev_example_instance (expand)" [label = "aws_instance.dev_example_instance", shape = "box"]
+		"[root] aws_s3_bucket.dev_logs_bucket" [label = "aws_s3_bucket.dev_logs_bucket", shape = "box"]
+		"[root] aws_s3_bucket.dev_logs_bucket (expand)" [label = "aws_s3_bucket.dev_logs_bucket", shape = "box"]
+		"[root] aws_s3_bucket.dev_test_bucket" [label = "aws_s3_bucket.dev_test_bucket", shape = "box"]
+		"[root] aws_s3_bucket.dev_test_bucket (expand)" [label = "aws_s3_bucket.dev_test_bucket", shape = "box"]
+		"[root] aws_s3_bucket_policy.dev_logs_bucket_policy" [label = "aws_s3_bucket_policy.dev_logs_bucket_policy", shape = "box"]
+		"[root] aws_s3_bucket_policy.dev_logs_bucket_policy (expand)" [label = "aws_s3_bucket_policy.dev_logs_bucket_policy", shape = "box"]
+		"[root] aws_s3_bucket_policy.dev_test_bucket_policy" [label = "aws_s3_bucket_policy.dev_test_bucket_policy", shape = "box"]
+		"[root] aws_s3_bucket_policy.dev_test_bucket_policy (expand)" [label = "aws_s3_bucket_policy.dev_test_bucket_policy", shape = "box"]
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"]" [label = "provider[\"registry.terraform.io/hashicorp/aws\"]", shape = "diamond"]
+		"[root] aws_db_instance.dev_example_db_instance (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"]"
+		"[root] aws_db_instance.dev_example_db_instance" -> "[root] aws_db_instance.dev_example_db_instance (expand)"
+		"[root] aws_instance.dev_example_instance (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"]"
+		"[root] aws_instance.dev_example_instance" -> "[root] aws_instance.dev_example_instance (expand)"
+		"[root] aws_s3_bucket.dev_logs_bucket (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"]"
+		"[root] aws_s3_bucket.dev_logs_bucket" -> "[root] aws_s3_bucket.dev_logs_bucket (expand)"
+		"[root] aws_s3_bucket.dev_test_bucket (expand)" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"]"
+		"[root] aws_s3_bucket.dev_test_bucket" -> "[root] aws_s3_bucket.dev_test_bucket (expand)"
+		"[root] aws_s3_bucket_policy.dev_logs_bucket_policy (expand)" -> "[root] aws_s3_bucket.dev_logs_bucket"
+		"[root] aws_s3_bucket_policy.dev_logs_bucket_policy" -> "[root] aws_s3_bucket_policy.dev_logs_bucket_policy (expand)"
+		"[root] aws_s3_bucket_policy.dev_test_bucket_policy (expand)" -> "[root] aws_s3_bucket.dev_test_bucket"
+		"[root] aws_s3_bucket_policy.dev_test_bucket_policy" -> "[root] aws_s3_bucket_policy.dev_test_bucket_policy (expand)"
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)" -> "[root] aws_db_instance.dev_example_db_instance"
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)" -> "[root] aws_instance.dev_example_instance"
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)" -> "[root] aws_s3_bucket_policy.dev_logs_bucket_policy"
+		"[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)" -> "[root] aws_s3_bucket_policy.dev_test_bucket_policy"
+		"[root] root" -> "[root] provider[\"registry.terraform.io/hashicorp/aws\"] (close)"
+	}
+}
+```
+
+- Break the parsing module into two functions and pass arguments accordingly
+
